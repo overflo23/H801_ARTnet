@@ -1,4 +1,8 @@
 /*
+
+v0.1 works, but needs cleanup ..
+universe and offset from setup gui are not used yet
+
 ARTnet support for the H801 Led controller
 
 You need the following libs to compile this  (Arduino 1.6.4)
