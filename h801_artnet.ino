@@ -1,5 +1,27 @@
 /*
+ARTnet support for the H801 Led controller
 
+You need the following libs to compile this  (Arduino 1.6.4)
+ - ArtnetWifi   (https://github.com/rstephan/ArtnetWifi)
+ - WifiManager  (https://github.com/tzapu/WiFiManager)
+ - Arduino JSON (https://github.com/bblanchon/ArduinoJson) 
+
+..and the ESP8266 environment for Arduino of course
+
+
+
+
+Links:
+ https://metalab.at/wiki/Metalights
+
+
+Author: overflo
+Date of release: 11/2016
+
+
+(Ab)use as you like (freeware), but make sure to comply with the libraries licenses.
+If you are using this for military equipment you are out of your head.
+Also you might consider your life choices.
 
 
 */
@@ -16,11 +38,9 @@
 //needed for library
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
-#include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager
+#include <WiFiManager.h>          
 
-
-#include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
-
+#include <ArduinoJson.h>        
 
 
 
