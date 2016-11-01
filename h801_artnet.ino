@@ -10,6 +10,8 @@ You need the following libs to compile this  (Arduino 1.6.4)
 
 
 
+The controller i got has 1MB of flash (8 Megabits) compile for generic ESP8266 module with 1M (512k SPIFFS)
+
 
 Links:
  https://metalab.at/wiki/Metalights
@@ -19,7 +21,7 @@ Author: overflo
 Date of release: 11/2016
 
 
-(Ab)use as you like (freeware), but make sure to comply with the libraries licenses.
+(Ab)use as you like this is freeware, but make sure to comply with the libraries licenses.
 If you are using this for military equipment you are out of your head.
 Also you might consider your life choices.
 
@@ -292,6 +294,10 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
 
 
 
+
+// I KNOW!!
+// this is not nice.. but a quick proof of concept this formware needs some fine tuning..
+// lots of repitation below. i am ashamed.
     
     if( data[0] != redVal)
     {
