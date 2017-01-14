@@ -49,12 +49,15 @@ Also you might consider your life choices.
 
 
 
+
 // where are all the led(strips) attached?
 #define redPin    15
 #define greenPin  13
 #define bluePin   12
 #define w1Pin     14
 #define w2Pin     4
+
+
 
 
 // onbaord GREEN LED D1
@@ -67,10 +70,11 @@ Also you might consider your life choices.
 // current value of each channel (0-255) used with analogWrite()
 // You can set a default light configuration here that appears when you turn the leds on and tehre is nothing sent from the network
 int redVal = 0;
-int greenVal = 0;
+int greenVal =0;
 int blueVal = 0;
+// normally full white when we turn on
 int w1Val = 255;
-int w2Val = 0;
+int w2Val = 0 ;
 
 
 
@@ -146,7 +150,7 @@ String getUniqueSystemName()
   String macID = String(mac[WL_MAC_ADDR_LENGTH - 2], HEX) + String("-") + String(mac[WL_MAC_ADDR_LENGTH - 1], HEX);
 
   macID.toUpperCase();
-  String UniqueSystemName = String("ARTNET_") + macID;
+  String UniqueSystemName = String("LOUNGE_CEILING_") + macID;
 
   return UniqueSystemName;
 }
@@ -219,9 +223,9 @@ boolean StartWifiManager(void)
 
 
 
-
+  //DEBUG - SETUP
   //reset settings - for testing
-  //wifiManager.resetSettings();
+//  wifiManager.resetSettings();
 
 
   // this is what is called if the webinterface want to save data, callback is right above this function and just sets a flag.
@@ -285,13 +289,13 @@ boolean StartWifiManager(void)
   // also really annoying if you just connected and the damn thing resets in the middel of filling in the GUI..
   // 5 minuts seems reasonable
   wifiManager.setTimeout(300);
-
+    Serial1.println("STARTED ACCESS POINT!");
   //fetches ssid and pass and tries to connect
   //if it does not connect it starts an access point with the specified name
   //here  "AutoConnectAP"
   //and goes into a blocking loop awaiting configuration
   if (!wifiManager.autoConnect(getUniqueSystemName().c_str())) {
-    Serial1.println("failed to connect and hit timeout");
+    Serial1.println("failed to connect and hit timeout for config :(");
 
 
     Serial1.println("Good bye kids! I am all outta here.");
@@ -314,7 +318,6 @@ boolean StartWifiManager(void)
   strcpy(ip, custom_ip.getValue());
   strcpy(gw, custom_gw.getValue());
   strcpy(sn, custom_sn.getValue());
-
 
 
 
@@ -430,6 +433,22 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
   // I KNOW!!
   // this is not nice.. but a quick proof of concept this formware needs some fine tuning..
   // lots of repitation below. i am ashamed.
+
+
+
+// DEBUG
+
+/*
+Serial1.print(" onDmxFrame() -  ");
+Serial1.print(" UNIVERSE: ");
+Serial1.print(universe);
+Serial1.print(" (our universe is ");
+Serial1.print(artnetUniverse);
+Serial1.print(") OFFSET: ");
+Serial1.println(idOffset);
+*/
+
+
 
   // not our universe? good bye!
   if (universe != artnetUniverse)  return;
@@ -666,6 +685,14 @@ void setup()
 
 
   Serial1.println("PINS SET TO OUTPUT");
+ 
+ // default is 1kHz, we set it to 25kHz to get rid of nasty sounds in the power supply during PWM
+ analogWriteFreq(25000);
+ 
+ 
+ //  analogWrite() supports 10 bit resolution (0-1023) on ESP8266 instead of the usual 0-255 by default. but artnet is 0-255 only..
+ // we fix this by setting the resolution to 10 bit.
+ analogWriteRange(255);
 
   // set default colors as long as there is no data over network coming in..
   analogWrite(redPin, redVal);
@@ -674,6 +701,7 @@ void setup()
   analogWrite(w1Pin, w1Val);
   analogWrite(w2Pin, w2Val);
 
+  
 
   Serial1.println("Leds set to default states");
 
@@ -699,6 +727,8 @@ void setup()
 
 
 
+
+
   setupFS();
   Serial1.println("SetupFS() done.");
 
@@ -706,6 +736,20 @@ void setup()
 
   StartWifiManager();
   Serial1.println("StartWifiManager() done.");
+
+
+
+
+  Serial1.println("Starting the ARTnet party");
+  
+  
+  
+  Serial1.print("ART-net UNIVERSE: ");
+  Serial1.println(artnetUniverse);
+  Serial1.print("ART-net OFFSET "); 
+  Serial1.println(idOffset);
+ 
+ 
 
 
   artnet.begin();
