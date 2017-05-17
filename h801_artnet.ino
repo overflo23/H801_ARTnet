@@ -1,11 +1,11 @@
 /*
 
-v 0.9 .. almos there..
+v 1.0 .. finally there
 
 ARTnet support for the H801 Led controller
 
 You need the following libs to compile this  (Arduino 1.6.4)
- - ArtnetWifi   (https://github.com/rstephan/ArtnetWifi)
+ - ArtnetWifi   (https://github.com/rstephan/ArtnetWifi) 
  - WifiManager  (https://github.com/tzapu/WiFiManager)
  - Arduino JSON (https://github.com/bblanchon/ArduinoJson)
 
@@ -18,7 +18,7 @@ The controller i got has 1MB of flash (8 Megabits) compile for generic ESP8266 m
 
 Links:
  https://metalab.at/wiki/Metalights
-
+ https://metalab.at/wiki/Umbrella
 
 Author: overflo
 Date of release: 11/2016
@@ -31,6 +31,9 @@ Also you might consider your life choices.
 
 */
 
+
+
+// WARNING  this file is full of UMBRELLA specific code.. and defines.
 
 #include <FS.h>
 
@@ -49,6 +52,10 @@ Also you might consider your life choices.
 
 
 
+#define RESET 0
+
+
+
 
 // where are all the led(strips) attached?
 #define redPin    15
@@ -56,6 +63,9 @@ Also you might consider your life choices.
 #define bluePin   12
 #define w1Pin     14
 #define w2Pin     4
+
+
+
 
 
 
@@ -75,16 +85,7 @@ int blueVal = 0;
 // normally full white when we turn on
 int w1Val = 255;
 int w2Val = 0 ;
-
-
-
-// each controller should parse 5 bytes from the 512 bytes universe data
-// the first controller reads 0-4, the second should have "5" as offset and read from 5-9 and so on..
-// these are changeed from the webinterface
-int idOffset = 0;
-int artnetUniverse = 0;
-
-
+//serserial
 
 
 
@@ -100,7 +101,7 @@ char sn[16] = ""; // could be 255.255.255.0
 
 
 
-/* ----------------- DON'T touch the defines below unless you now what you are up to.---------------------------- */
+/* ----------------- DON'T touch the defines below unless you REALLY now what you are up to.---------------------------- */
 
 
 
@@ -116,16 +117,6 @@ boolean set_ip = 0;
 
 
 
-// TOODO:  should check if i still need this ..
-// Check if we got all universes  
-const int maxUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
-bool universesReceived[maxUniverses];
-bool sendFrame = 1;
-int previousDataLength = 0;
-
-
-
-
 
 // temporary buffer for webinterface
 char artnet_universe[3];
@@ -133,6 +124,19 @@ char id_offset[3];
 
 //flag for saving data
 bool shouldSaveConfig = false;
+
+
+
+
+// each controller should parse 5 bytes from the 512 bytes universe data
+// the first controller reads 0-4, the second should have "5" as offset and read from 5-9 and so on..
+// these are changeed from the webinterface
+int idOffset = 0;
+int artnetUniverse = 0;
+
+
+
+
 
 
 
@@ -150,7 +154,7 @@ String getUniqueSystemName()
   String macID = String(mac[WL_MAC_ADDR_LENGTH - 2], HEX) + String("-") + String(mac[WL_MAC_ADDR_LENGTH - 1], HEX);
 
   macID.toUpperCase();
-  String UniqueSystemName = String("LOUNGE_CEILING_") + macID;
+  String UniqueSystemName = String("UMBRELLA_10_") + macID;
 
   return UniqueSystemName;
 }
@@ -225,7 +229,7 @@ boolean StartWifiManager(void)
 
   //DEBUG - SETUP
   //reset settings - for testing
-//  wifiManager.resetSettings();
+if(RESET)  wifiManager.resetSettings();
 
 
   // this is what is called if the webinterface want to save data, callback is right above this function and just sets a flag.
@@ -424,21 +428,7 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
     Serial1.print("...");
   }
   Serial1.println();
-  */
 
-
-
-
-
-  // I KNOW!!
-  // this is not nice.. but a quick proof of concept this formware needs some fine tuning..
-  // lots of repitation below. i am ashamed.
-
-
-
-// DEBUG
-
-/*
 Serial1.print(" onDmxFrame() -  ");
 Serial1.print(" UNIVERSE: ");
 Serial1.print(universe);
@@ -450,30 +440,51 @@ Serial1.println(idOffset);
 
 
 
+
+
+
+
+
+
+
+
+
+  // I KNOW!!
+  // this is not nice.. but a quick proof of concept this firmware needs some fine tuning..
+  // lots of repitation below.
+  // on the other hand.. whatever. works for me. works for you. works.
+  // ship it.
+
+
+
+
+
+
   // not our universe? good bye!
   if (universe != artnetUniverse)  return;
 
 
 
-  // only change values if thez differ from what hey are at the moment
-  if ( data[0 + idOffset] != redVal)
-  {
 
-    digitalWrite(LED2PIN, LOW);
+  // only change values if they differ from what they are at the moment
+//  if ( data[0 + idOffset] != redVal)
+//  {
+
+   // digitalWrite(LED2PIN, LOW);
     redVal = data[0 + idOffset];
 
     Serial1.print("Setting red to: ");
     Serial1.println(redVal);
 
+// only enable RGB if white is OFF
+ //   if((!w1Val) && (!w2Val))  analogWrite(redPin, redVal);
+//  }
 
-    analogWrite(redPin, redVal);
-  }
 
+//  if ( data[1 + idOffset] != greenVal)
+//  {
 
-  if ( data[1 + idOffset] != greenVal)
-  {
-
-    digitalWrite(LED2PIN, LOW);
+  //  digitalWrite(LED2PIN, LOW);
     greenVal = data[1 + idOffset];
 
 
@@ -481,31 +492,35 @@ Serial1.println(idOffset);
     Serial1.println(greenVal);
 
 
-    analogWrite(greenPin, greenVal);
-  }
+
+// only enable RGB if white is OFF
+ //   if((!w1Val) && (!w2Val))    analogWrite(greenPin, greenVal);
+//  }
 
 
-  if ( data[2 + idOffset] != blueVal)
-  {
+//  if ( data[2 + idOffset] != blueVal)
+//  {
 
 
-    digitalWrite(LED2PIN, LOW);
+  //  digitalWrite(LED2PIN, LOW);
 
     blueVal = data[2 + idOffset];
 
     Serial1.print("Setting blue to: ");
-    Serial1.println(blueVal);
-
-
-    analogWrite(bluePin, blueVal);
-  }
 
 
 
-  if ( data[3 + idOffset] != w1Val)
-  {
+   
+// only enable RGB if white is OFF
+//    if((!w1Val) && (!w2Val)) analogWrite(bluePin, blueVal);
+//  }
 
-    digitalWrite(LED2PIN, LOW);
+
+
+//  if ( data[3 + idOffset] != w1Val)
+//  {
+
+//    digitalWrite(LED2PIN, LOW);
 
 
     w1Val = data[3 + idOffset];
@@ -513,15 +528,17 @@ Serial1.println(idOffset);
     Serial1.print("Setting w1 to: ");
     Serial1.println(w1Val);
 
-    analogWrite(w1Pin, w1Val);
-  }
+
+// only white if rgb is off
+//    if((!redVal) && (!greenVal) && (!blueVal) )  analogWrite(w1Pin, w1Val);
+//  }
 
 
 
-  if ( data[4 + idOffset] != w2Val)
-  {
+//  if ( data[4 + idOffset] != w2Val)
+//  {
 
-    digitalWrite(LED2PIN, LOW);
+  //  digitalWrite(LED2PIN, LOW);
 
 
     w2Val = data[4 + idOffset];
@@ -529,13 +546,57 @@ Serial1.println(idOffset);
     Serial1.print("Setting w2 to: ");
     Serial1.println(w2Val);
 
-    analogWrite(w2Pin, w2Val);
-  }
+  
+// only white if rgb is off
+//    if((!redVal) && (!greenVal) && (!blueVal) )  analogWrite(w2Pin, w2Val);
+//  }
+
+
+
+
+
+
+
+ if((!w1Val) && (!w2Val))
+ {
+  analogWrite(redPin, redVal);
+  analogWrite(greenPin, greenVal);
+  analogWrite(bluePin, blueVal);
+
+
+  analogWrite(w1Pin, 0);
+  analogWrite(w2Pin, 0);
+  
+ }
+
+
+ 
+ if((!redVal) && (!greenVal) && (!blueVal) ) 
+ {
+  analogWrite(w1Pin, w1Val);
+  analogWrite(w2Pin, w2Val);
+
+
+
+  analogWrite(redPin, 0);
+  analogWrite(greenPin, 0);
+  analogWrite(bluePin, 0);
+  
+ }
 
 
 
   // GREEN onboard led off
-  digitalWrite(LED2PIN, HIGH);
+  //digitalWrite(LED2PIN, HIGH);
+
+
+
+
+
+
+
+
+
 
 
 }
@@ -570,7 +631,7 @@ void setupFS()
   Serial1.println("mounting FS...");
 
 
-
+if(RESET) SPIFFS.format();
 
   if (SPIFFS.begin()) {
     Serial1.println("mounted file system");
@@ -605,10 +666,23 @@ void setupFS()
 
         // make int from string
         strcpy(id_offset, json["id_offset"]);
+    
+     
+   
+      
         idOffset = atoi(id_offset);
+
+
+
 
         // make int from string
         strcpy(artnet_universe, json["artnet_universe"]);
+
+
+
+
+    
+
         artnetUniverse = atoi(artnet_universe);
 
 
@@ -679,20 +753,17 @@ void setup()
   pinMode(w2Pin, OUTPUT);
 
   // onboard leds also outputs
-  pinMode(LEDPIN, OUTPUT);
-  pinMode(LED2PIN, OUTPUT);
-
-
+  // pinMode(LEDPIN, OUTPUT);
+  // pinMode(LED2PIN, OUTPUT);
 
   Serial1.println("PINS SET TO OUTPUT");
+
+  // default is 1kHz, we set it to 25kHz to get rid of nasty sounds in the power supply during PWM
+  analogWriteFreq(25000);
  
- // default is 1kHz, we set it to 25kHz to get rid of nasty sounds in the power supply during PWM
- analogWriteFreq(25000);
- 
- 
- //  analogWrite() supports 10 bit resolution (0-1023) on ESP8266 instead of the usual 0-255 by default. but artnet is 0-255 only..
- // we fix this by setting the resolution to 10 bit.
- analogWriteRange(255);
+  //  analogWrite() supports 10 bit resolution (0-1023) on ESP8266 instead of the usual 0-255 by default. but artnet is 0-255 only..
+  // we fix this by setting the resolution to 8 bit (0-255).
+  analogWriteRange(255);
 
   // set default colors as long as there is no data over network coming in..
   analogWrite(redPin, redVal);
@@ -708,10 +779,10 @@ void setup()
   // on boards led are wired for LOW to turn them on and HIGH turning them off..
   
   // red led ON
-  digitalWrite(LEDPIN, LOW);
+  //digitalWrite(LEDPIN, LOW);
   
   // green led OFF
-  digitalWrite(LED2PIN, HIGH);
+ // digitalWrite(LED2PIN, HIGH);
 
 
 
@@ -765,14 +836,15 @@ void setup()
 
 
 
-// life in loops.
+
 void loop()
 {
+ // eat, sleep, rave, procrastinate, replicate .. life in loop()s.
+
+  
   // we call the read function inside the loop
   artnet.read();
 }
-
-
 
 
 
